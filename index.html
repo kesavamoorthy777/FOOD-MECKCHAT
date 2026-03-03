@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>MECKCHAT26.O – Food Token</title>
+  <meta name="description" content="College food token system – generate and download your unique QR food token." />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bungee+Shade&family=Bungee&display=swap"
+    rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+            },
+            surface: '#1a1a2e',
+            card: '#16213e',
+            accent: '#0f3460',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(rgba(10, 10, 20, 0.8), rgba(10, 10, 20, 0.8)), url('car.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(249, 115, 22, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-green {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
+    }
+
+    .btn-green:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(34, 197, 94, 0.5);
+    }
+
+    .btn-green:active {
+      transform: translateY(0);
+    }
+
+    .btn-wa {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(37, 211, 102, 0.35);
+    }
+
+    .btn-wa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(37, 211, 102, 0.5);
+    }
+
+    .btn-wa:active {
+      transform: translateY(0);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #f97316 !important;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+    }
+
+    #qr-container canvas,
+    #qr-container img {
+      margin: auto;
+      border-radius: 12px;
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .shake {
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      25% {
+        transform: translateX(-8px)
+      }
+
+      75% {
+        transform: translateX(8px)
+      }
+    }
+
+    .pulse-dot {
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.5
+      }
+    }
+
+    .token-badge {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(234, 88, 12, 0.2) 100%);
+      border: 1px solid rgba(249, 115, 22, 0.4);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(249, 115, 22, 0.5);
+      border-radius: 4px;
+    }
+
+    .fire-title {
+      font-family: 'Bungee', cursive;
+      font-size: 18px;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff, #fbbf24, #f97316, #ef4444);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.8));
+      letter-spacing: 1px;
+      animation: fire-glow 1.5s ease-in-out infinite alternate;
+      text-transform: uppercase;
+    }
+
+    .fire-subtitle {
+      font-family: 'Bungee', cursive;
+      font-size: 11px;
+      color: #fca5a5;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+      margin-top: 1px;
+    }
+
+    @keyframes fire-glow {
+      from {
+        filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.6));
+      }
+
+      to {
+        filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.9)) drop-shadow(0 0 15px rgba(249, 115, 22, 0.4));
+      }
+    }
+  </style>
+</head>
+
+<body class="text-white">
+
+  <!-- Header -->
+  <header class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <img src="logo.png" alt="MECKCHAT Logo" class="h-12 w-auto" />
+      <div class="flex flex-col justify-center">
+        <h1 class="fire-title">MEKCHAT 26.O</h1>
+        <p class="fire-subtitle">FOOD TOKEN </p>
+      </div>
+    </div>
+    <a href="admin.html"
+      class="text-xs glass px-3 py-1.5 rounded-full text-orange-300 font-medium hover:bg-orange-500/20 transition-colors">⚙
+      Admin</a>
+  </header>
+
+  <main class="max-w-md mx-auto px-4 pb-10 pt-4">
+
+    <!-- Hero Banner -->
+    <div class="glass rounded-2xl p-5 mb-5 text-center fade-in">
+      <img src="logo.png" alt="MECKCHAT Logo" class="h-24 w-auto mx-auto mb-4" />
+      <p class="text-sm text-gray-400 leading-relaxed">Enter your register number and phone number to generate your
+        unique QR food token.</p>
+    </div>
+
+    <!-- Login Form -->
+    <div id="form-section" class="glass rounded-2xl p-5 mb-5 fade-in" style="animation-delay:0.1s">
+      <h3 class="text-base font-semibold mb-4 flex items-center gap-2">
+        <span class="w-6 h-6 bg-orange-500/20 rounded-lg flex items-center justify-center text-sm">🎓</span>
+        Student Verification
+      </h3>
+
+      <div class="space-y-4">
+        <!-- Register Number -->
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5 font-medium" for="reg-input">Register Number</label>
+          <input id="reg-input" type="text" placeholder="Register Number" autocomplete="off"
+            class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 text-sm transition-all"
+            style="text-transform: uppercase;" />
+        </div>
+        <!-- Phone Number -->
+        <div>
+          <label class="block text-xs text-gray-400 mb-1.5 font-medium" for="phone-input">Phone Number</label>
+          <div class="flex gap-2">
+            <div class="glass rounded-xl px-3 py-3.5 text-sm text-gray-300 border border-white/10 flex items-center">
+              🇮🇳 +91</div>
+            <input id="phone-input" type="tel" placeholder="10-digit mobile number" maxlength="10" autocomplete="off"
+              class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 text-sm transition-all" />
+          </div>
+        </div>
+        <!-- Error Message -->
+        <div id="error-msg"
+          class="hidden bg-red-500/15 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm flex items-center gap-2">
+          <span>⚠️</span><span id="error-text">Invalid credentials.</span>
+        </div>
+        <!-- Submit -->
+        <button id="verify-btn" onclick="verifyStudent()"
+          class="btn-primary w-full py-4 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2">
+          <span id="btn-text">🔍 Verify & Get Token</span>
+          <span id="btn-loader" class="hidden">⏳ Verifying...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- QR Result Section -->
+    <div id="result-section" class="hidden fade-in">
+
+      <!-- Student Info Card -->
+      <div class="glass rounded-2xl p-5 mb-4">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-12 h-12 btn-primary rounded-xl flex items-center justify-center text-2xl">👤</div>
+          <div>
+            <p id="student-name" class="font-bold text-lg leading-tight"></p>
+            <p id="student-dept" class="text-xs text-gray-400"></p>
+          </div>
+          <div id="token-status-badge" class="ml-auto text-xs font-semibold px-2 py-1 rounded-full"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="token-badge rounded-xl px-3 py-2">
+            <p class="text-xs text-gray-400">Register No.</p>
+            <p id="info-reg" class="font-semibold text-sm text-orange-300"></p>
+          </div>
+          <div class="token-badge rounded-xl px-3 py-2">
+            <p class="text-xs text-gray-400">Token ID</p>
+            <p id="info-token" class="font-semibold text-sm text-orange-300 truncate"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code Card -->
+      <div class="glass rounded-2xl p-5 mb-4 text-center">
+        <p class="text-xs text-gray-400 mb-4 font-medium uppercase tracking-widest">Your Food Token QR Code</p>
+        <div class="bg-white rounded-2xl p-4 inline-block shadow-2xl mb-4">
+          <div id="qr-container"></div>
+        </div>
+        <p class="text-xs text-gray-500 mb-3 flex items-center justify-center gap-1">
+          <span class="pulse-dot w-2 h-2 bg-green-400 rounded-full inline-block"></span>
+          Present this QR at the food counter
+        </p>
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="downloadQR()"
+            class="btn-green py-3.5 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-1.5">
+            ⬇ Download
+          </button>
+          <button id="whatsapp-btn"
+            class="btn-wa py-3.5 rounded-xl font-semibold text-white text-sm flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+            Share
+          </button>
+        </div>
+      </div>
+
+      <!-- Used Warning -->
+      <div id="used-warning" class="hidden bg-red-500/15 border border-red-500/30 rounded-2xl p-4 mb-4 text-center">
+        <div class="text-3xl mb-2">🚫</div>
+        <p class="font-bold text-red-300 text-sm">Token Already Used</p>
+        <p class="text-xs text-gray-400 mt-1">This food token has already been redeemed at the counter.</p>
+      </div>
+
+      <!-- New Login Button -->
+      <button onclick="resetForm()"
+        class="glass w-full py-3.5 rounded-xl font-medium text-gray-300 text-sm hover:bg-white/10 transition-colors">
+        ← Logout / New Student
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="tokens.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

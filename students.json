@@ -1,0 +1,122 @@
+[
+  {
+    "registerNumber": "CS2101",
+    "name": "Arjun Ravi",
+    "phone": "9876543210",
+    "department": "Computer Science",
+    "year": "2nd Year",
+    "tokenId": "TKN-CS2101-001"
+  },
+  {
+    "registerNumber": "CS2102",
+    "name": "Priya Lakshmi",
+    "phone": "9876543211",
+    "department": "Computer Science",
+    "year": "2nd Year",
+    "tokenId": "TKN-CS2102-002"
+  },
+  {
+    "registerNumber": "CS2103",
+    "name": "Karthik Suresh",
+    "phone": "9876543212",
+    "department": "Computer Science",
+    "year": "2nd Year",
+    "tokenId": "TKN-CS2103-003"
+  },
+  {
+    "registerNumber": "ME2101",
+    "name": "Divya Nair",
+    "phone": "9876543213",
+    "department": "Mechanical Engineering",
+    "year": "2nd Year",
+    "tokenId": "TKN-ME2101-004"
+  },
+  {
+    "registerNumber": "ME2102",
+    "name": "Raj Kumar",
+    "phone": "9876543214",
+    "department": "Mechanical Engineering",
+    "year": "2nd Year",
+    "tokenId": "TKN-ME2102-005"
+  },
+  {
+    "registerNumber": "EC2101",
+    "name": "Anitha Selvam",
+    "phone": "9876543215",
+    "department": "Electronics & Communication",
+    "year": "2nd Year",
+    "tokenId": "TKN-EC2101-006"
+  },
+  {
+    "registerNumber": "EC2102",
+    "name": "Senthil Kumar",
+    "phone": "9876543216",
+    "department": "Electronics & Communication",
+    "year": "2nd Year",
+    "tokenId": "TKN-EC2102-007"
+  },
+  {
+    "registerNumber": "CE2101",
+    "name": "Meena Devi",
+    "phone": "9876543217",
+    "department": "Civil Engineering",
+    "year": "2nd Year",
+    "tokenId": "TKN-CE2101-008"
+  },
+  {
+    "registerNumber": "IT2101",
+    "name": "Vijay Anand",
+    "phone": "9876543218",
+    "department": "Information Technology",
+    "year": "2nd Year",
+    "tokenId": "TKN-IT2101-009"
+  },
+  {
+    "registerNumber": "IT2102",
+    "name": "Kavitha Mohan",
+    "phone": "9876543219",
+    "department": "Information Technology",
+    "year": "2nd Year",
+    "tokenId": "TKN-IT2102-010"
+  },
+  {
+    "registerNumber": "CS2201",
+    "name": "Arun Prasad",
+    "phone": "9845671230",
+    "department": "Computer Science",
+    "year": "3rd Year",
+    "tokenId": "TKN-CS2201-011"
+  },
+  {
+    "registerNumber": "CS2202",
+    "name": "Lalitha Krishnan",
+    "phone": "9845671231",
+    "department": "Computer Science",
+    "year": "3rd Year",
+    "tokenId": "TKN-CS2202-012"
+  },
+  {
+    "registerNumber": "ME2201",
+    "name": "Deepak Raj",
+    "phone": "9845671232",
+    "department": "Mechanical Engineering",
+    "year": "3rd Year",
+    "tokenId": "TKN-ME2201-013"
+  },
+  {
+    "registerNumber": "EC2201",
+    "name": "Saranya Prabhu",
+    "phone": "9845671233",
+    "department": "Electronics & Communication",
+    "year": "3rd Year",
+    "tokenId": "TKN-EC2201-014"
+  },
+  {
+    "registerNumber": "IT2201",
+    "name": "Naveen Balaji",
+    "phone": "9845671234",
+    "department": "Information Technology",
+    "year": "3rd Year",
+    "tokenId": "TKN-IT2201-015"
+  }
+]

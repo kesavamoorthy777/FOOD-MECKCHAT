@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>MEKCHAT26.O – Admin Panel</title>
+    <meta name="description" content="Admin panel for scanning and verifying food tokens." />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Chart.js for pie chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bungee+Shade&family=Bungee&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(rgba(10, 10, 20, 0.9), rgba(10, 10, 20, 0.9)), url('car.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-green {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        .glass-red {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 4px 20px rgba(249, 115, 22, .35);
+            transition: all .25s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(249, 115, 22, .5);
+        }
+
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, .3);
+            transition: all .25s;
+        }
+
+        .btn-red:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            box-shadow: 0 4px 16px rgba(34, 197, 94, .3);
+            transition: all .25s;
+        }
+
+        .tab-active {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(249, 115, 22, .4);
+        }
+
+        .tab-inactive {
+            background: rgba(255, 255, 255, 0.05);
+            color: #9ca3af;
+        }
+
+        .fade-in {
+            animation: fadeIn .4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .result-appear {
+            animation: resultAppear .5s cubic-bezier(.175, .885, .32, 1.275) forwards;
+        }
+
+        @keyframes resultAppear {
+            0% {
+                opacity: 0;
+                transform: scale(.8)
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform .2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        #reader video {
+            border-radius: 12px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #f97316 !important;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, .2);
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(249, 115, 22, .5);
+            border-radius: 4px;
+        }
+
+        .admin-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .filter-chip-active {
+            background: linear-gradient(135deg, #f97316, #ea580c) !important;
+            color: #fff !important;
+        }
+
+        .fire-title {
+            font-family: 'Bungee', cursive;
+            font-size: 16px;
+            line-height: 1;
+            background: linear-gradient(135deg, #fff, #fbbf24, #f97316, #ef4444);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.8));
+            letter-spacing: 1px;
+            animation: fire-glow 1.5s ease-in-out infinite alternate;
+            text-transform: uppercase;
+        }
+
+        .fire-subtitle {
+            font-family: 'Bungee', cursive;
+            font-size: 10px;
+            color: #fca5a5;
+            letter-spacing: 2px;
+            text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+            margin-top: 1px;
+        }
+
+        @keyframes fire-glow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.6));
+            }
+
+            to {
+                filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.9)) drop-shadow(0 0 15px rgba(249, 115, 22, 0.4));
+            }
+        }
+    </style>
+</head>
+
+<body class="text-white">
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <img src="logo.png" alt="MEKCHAT Logo" class="h-10 w-auto" />
+            <div class="flex flex-col justify-center">
+                <h1 class="fire-title">MEKCHAT 26.O</h1>
+                <p class="fire-subtitle">ADMIN PORTAL </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span id="logged-in-badge"
+                class="hidden text-xs bg-green-500/20 text-green-300 border border-green-500/30 px-2 py-1 rounded-full font-medium"></span>
+            <button id="logout-btn" onclick="adminLogout()"
+                class="hidden text-xs glass px-3 py-1.5 rounded-full text-red-300 font-medium hover:bg-red-500/20 transition-colors">↩
+                Logout</button>
+            <a href="index.html"
+                class="text-xs glass px-3 py-1.5 rounded-full text-orange-300 font-medium hover:bg-orange-500/20 transition-colors">←
+                Student</a>
+        </div>
+    </header>
+
+    <!-- ════════════════════ AUTH GATE ════════════════════ -->
+    <div id="auth-gate" class="max-w-md mx-auto px-4 pt-8">
+        <div class="glass rounded-2xl p-6 fade-in">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-3">🔐</div>
+                <h2 class="text-xl font-bold mb-1">Admin Access</h2>
+                <p class="text-sm text-gray-400">Authorised personnel only</p>
+            </div>
+
+            <!-- Admin selector -->
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 mb-1.5 font-medium">Select Admin</label>
+                <select id="admin-select"
+                    class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
+                    <option value="" disabled selected class="bg-gray-900">— Choose your name —</option>
+                </select>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 mb-1.5 font-medium">Password</label>
+                <div class="relative">
+                    <input id="admin-pass" type="password" placeholder="Enter your password"
+                        class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-orange-500"
+                        onkeydown="if(event.key==='Enter') adminLogin()" />
+                    <button type="button" onclick="togglePassword()"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-lg hover:opacity-70 transition-opacity">
+                        👀
+                    </button>
+                </div>
+            </div>
+
+            <div id="auth-error"
+                class="hidden bg-red-500/15 border border-red-500/30 rounded-xl px-4 py-2.5 text-red-300 text-xs mb-3">
+                ❌ Invalid credentials. Please try again.
+            </div>
+
+            <button onclick="adminLogin()" class="btn-primary w-full py-4 rounded-xl font-bold text-white text-sm">
+                🔓 Login to Admin Panel
+            </button>
+
+            <!-- Admin avatars row -->
+            <div id="admin-avatars" class="flex justify-center gap-2 mt-5 flex-wrap"></div>
+        </div>
+    </div>
+
+    <!-- ════════════════════ MAIN CONTENT ════════════════════ -->
+    <main id="admin-content" class="hidden max-w-md mx-auto px-4 pb-10 pt-4">
+
+        <!-- Tabs -->
+        <div class="grid grid-cols-4 gap-1.5 mb-5 rounded-2xl glass p-1.5">
+            <button id="tab-scan" onclick="switchTab('scan')"
+                class="py-2.5 rounded-xl text-xs font-semibold transition-all tab-active">📷 Scan</button>
+            <button id="tab-stats" onclick="switchTab('stats')"
+                class="py-2.5 rounded-xl text-xs font-semibold transition-all tab-inactive">📊 Stats</button>
+            <button id="tab-bought" onclick="switchTab('bought')"
+                class="py-2.5 rounded-xl text-xs font-semibold transition-all tab-inactive">✅ Bought</button>
+            <button id="tab-list" onclick="switchTab('list')"
+                class="py-2.5 rounded-xl text-xs font-semibold transition-all tab-inactive">📋 All</button>
+        </div>
+
+        <!-- ══════════ SCANNER TAB ══════════ -->
+        <div id="panel-scan" class="fade-in">
+            <div class="glass rounded-2xl p-5 mb-4">
+                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📷 Scan QR Code</h3>
+                <div id="reader"
+                    class="w-full mb-4 rounded-2xl overflow-hidden bg-black/30 min-h-[200px] flex items-center justify-center">
+                    <p class="text-gray-500 text-sm text-center px-4">Tap Start Camera to begin scanning</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="start-btn" onclick="startScanner()"
+                        class="btn-primary flex-1 py-3 rounded-xl font-semibold text-sm">▶ Start Camera</button>
+                    <button id="stop-btn" onclick="stopScanner()"
+                        class="glass flex-1 py-3 rounded-xl font-semibold text-sm text-gray-300 hidden">⏹ Stop</button>
+                </div>
+            </div>
+
+            <!-- Manual lookup -->
+            <div class="glass rounded-2xl p-5 mb-4">
+                <h3 class="text-sm font-semibold mb-3">🔍 Manual Lookup</h3>
+                <div class="flex gap-2">
+                    <input id="manual-token" type="text" placeholder="Token ID or Register No."
+                        class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm" />
+                    <button onclick="manualLookup()"
+                        class="btn-primary px-4 py-3 rounded-xl font-semibold text-sm">Go</button>
+                </div>
+            </div>
+
+            <!-- Scan Result -->
+            <div id="scan-result" class="hidden mb-4 result-appear">
+                <div id="scan-result-inner" class="rounded-2xl p-5">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div id="result-icon"
+                            class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                            <p id="result-name" class="font-bold text-base leading-tight"></p>
+                            <p id="result-dept" class="text-xs text-gray-400 mt-0.5"></p>
+                            <p id="result-year-tag" class="text-xs mt-0.5"></p>
+                        </div>
+                        <div id="result-badge" class="ml-auto px-2 py-1 rounded-full text-xs font-bold shrink-0"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-white/5 rounded-xl px-3 py-2">
+                            <p class="text-xs text-gray-500">Register No.</p>
+                            <p id="result-reg" class="font-semibold text-sm text-orange-300 truncate"></p>
+                        </div>
+                        <div class="bg-white/5 rounded-xl px-3 py-2">
+                            <p class="text-xs text-gray-500">Token ID</p>
+                            <p id="result-token-id" class="font-semibold text-sm text-orange-300 truncate"></p>
+                        </div>
+                        <div class="bg-white/5 rounded-xl px-3 py-2">
+                            <p class="text-xs text-gray-500">Phone</p>
+                            <p id="result-phone" class="font-semibold text-sm"></p>
+                        </div>
+                        <div class="bg-white/5 rounded-xl px-3 py-2">
+                            <p class="text-xs text-gray-500">Status</p>
+                            <p id="result-status-text" class="font-semibold text-sm"></p>
+                        </div>
+                    </div>
+                    <button id="mark-used-btn" onclick="markCurrentTokenUsed()"
+                        class="btn-red w-full py-3.5 rounded-xl font-bold text-white text-sm hidden">
+                        ✓ Mark as Used (Token Redeemed)
+                    </button>
+                    <div id="already-used-info"
+                        class="hidden bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-center">
+                        <p class="text-red-400 font-semibold text-sm">⛔ Already Redeemed</p>
+                        <p id="used-time" class="text-xs text-gray-500 mt-0.5"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════ STATS TAB ══════════ -->
+        <div id="panel-stats" class="hidden fade-in">
+            <!-- Summary cards -->
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-white" id="stat-total">0</div>
+                    <div class="text-xs text-gray-400 mt-1">Total</div>
+                    <div class="text-xl mt-1">🎓</div>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-green-400" id="stat-used">0</div>
+                    <div class="text-xs text-gray-400 mt-1">Bought</div>
+                    <div class="text-xl mt-1">✅</div>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <div class="text-3xl font-bold text-orange-400" id="stat-remaining">0</div>
+                    <div class="text-xs text-gray-400 mt-1">Pending</div>
+                    <div class="text-xl mt-1">🎟️</div>
+                </div>
+            </div>
+
+            <!-- Overall progress -->
+            <div class="glass rounded-2xl p-5 mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <p class="text-sm font-semibold">Overall Redemption</p>
+                    <p id="stat-percent" class="text-orange-400 font-bold text-sm">0%</p>
+                </div>
+                <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full rounded-full transition-all duration-700"
+                        style="width:0%;background:linear-gradient(90deg,#f97316,#ea580c)"></div>
+                </div>
+            </div>
+
+            <!-- PIE CHART — Year wise -->
+            <div class="glass rounded-2xl p-5 mb-4">
+                <h3 class="text-sm font-semibold mb-4 text-center">📊 Year-wise Token Status</h3>
+                <div class="relative" style="max-width:280px;margin:auto;">
+                    <canvas id="pie-chart"></canvas>
+                </div>
+                <div id="pie-legend" class="mt-4 space-y-2"></div>
+            </div>
+
+
+        </div>
+
+        <!-- ══════════ BOUGHT STUDENTS TAB ══════════ -->
+        <div id="panel-bought" class="hidden fade-in">
+            <!-- Year filter chips -->
+            <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+                <button onclick="setBoughtFilter('all')" id="bf-all"
+                    class="bought-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap btn-primary text-white">All</button>
+                <button onclick="setBoughtFilter('final')" id="bf-final"
+                    class="bought-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap glass text-gray-300">Final
+                    Year</button>
+                <button onclick="setBoughtFilter('3rd')" id="bf-3rd"
+                    class="bought-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap glass text-gray-300">3rd
+                    Year</button>
+                <button onclick="setBoughtFilter('2nd')" id="bf-2nd"
+                    class="bought-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap glass text-gray-300">2nd
+                    Year</button>
+            </div>
+            <div id="bought-count" class="text-xs text-gray-400 mb-3 px-1"></div>
+            <div id="bought-list" class="space-y-3"></div>
+        </div>
+
+        <!-- ══════════ ALL STUDENTS TAB ══════════ -->
+        <div id="panel-list" class="hidden fade-in">
+            <div class="glass rounded-2xl p-3 mb-4 flex gap-2">
+                <input id="search-input" type="text" placeholder="Search by name or register no..."
+                    class="flex-1 bg-transparent text-white placeholder-gray-500 text-sm focus:outline-none"
+                    oninput="renderTokensList()" />
+                <span class="text-gray-500">🔍</span>
+            </div>
+            <div class="flex gap-2 mb-4 overflow-x-auto pb-1">
+                <button onclick="setFilter('all')" id="filter-all"
+                    class="filter-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap btn-primary text-white">All</button>
+                <button onclick="setFilter('unused')" id="filter-unused"
+                    class="filter-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap glass text-gray-300">⏳
+                    Pending</button>
+                <button onclick="setFilter('used')" id="filter-used"
+                    class="filter-chip px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap glass text-gray-300">✅
+                    Bought</button>
+            </div>
+            <div id="tokens-list" class="space-y-3"></div>
+        </div>
+
+    </main>
+
+    <script>
+        function togglePassword() {
+            const passInput = document.getElementById('admin-pass');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        }
+    </script>
+    <script src="tokens.js"></script>
+    <script src="admin.js"></script>
+</body>
+
+</html>
