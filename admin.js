@@ -264,38 +264,57 @@ function resetScannerUI() {
 }
 
 function onScanSuccess(text) {
+    const cleanText = text.trim();
+
     // Pause the scanner until the user deals with the result
     if (html5QrScanner && scannerRunning) {
-        try {
-            html5QrScanner.pause(true);
-        } catch (e) {
-            console.error('Error pausing scanner:', e);
-        }
+        try { html5QrScanner.pause(true); } catch (e) { }
     }
 
     try {
-        // Robust JSON/Regex parsing
         let reg = '';
-        if (text.startsWith('{')) {
+
+        // Strategy 1: Attempt JSON parsing if it looks like an object
+        if (cleanText.startsWith('{')) {
             try {
-                const d = JSON.parse(text);
-                reg = d['REGISTER NUMBER'] || d.reg || d.tokenId || '';
+                const d = JSON.parse(cleanText);
+                // Be very aggressive searching for the register number key
+                reg = d['REGISTER NUMBER'] || d['registerNumber'] || d['reg'] || d['tokenId'] ||
+                    d['TOKEN ID'] || d['REG'] || d['TOKEN'] || '';
+
+                // If keys are missing but object exists, try finding any 16-digit string inside
+                if (!reg) {
+                    const foundReg = Object.values(d).find(v => typeof v === 'string' && /^\d{10,16}$/.test(v));
+                    if (foundReg) reg = foundReg;
+                }
             } catch (je) {
-                // Try regex fallback if JSON is slightly malformed
-                const matchReg = text.match(/"REGISTER NUMBER"\s*:\s*"([^"]+)"/i) || text.match(/"reg"\s*:\s*"([^"]+)"/i);
-                if (matchReg) reg = matchReg[1];
+                console.warn('JSON parse partially failed, falling back to regex');
             }
+        }
+
+        // Strategy 2: Regex extraction (Case Insensitive) if Strategy 1 failed
+        if (!reg) {
+            const rMatch = cleanText.match(/"?REGISTER NUMBER"?\s*[:=]\s*"?(\d+)"?/i) ||
+                cleanText.match(/"?reg"?\s*[:=]\s*"?(\d+)"?/i) ||
+                cleanText.match(/"?tokenId"?\s*[:=]\s*"?(\d+)"?/i);
+            if (rMatch) reg = rMatch[1];
+        }
+
+        // Strategy 3: Pure digit extraction (Any string of 12-16 digits)
+        if (!reg) {
+            const digits = cleanText.match(/\d{12,16}/);
+            if (digits) reg = digits[0];
         }
 
         if (reg) {
             lookupStudent(String(reg).trim(), reg);
         } else {
-            // Raw text or failed to find key
-            lookupStudent(text.trim(), null);
+            // Raw text fallback
+            lookupStudent(cleanText, null);
         }
     } catch (err) {
         console.error('onScanSuccess processing error:', err);
-        lookupStudent(text.trim(), null);
+        lookupStudent(cleanText, null);
     }
 }
 
@@ -361,7 +380,7 @@ function lookupStudent(identifier, tokenIdHint) {
         document.getElementById('already-used-info').classList.remove('hidden');
         document.getElementById('already-used-info').innerHTML = `
             <p class="text-red-400 font-black text-sm mb-1">THIRUMBA VANGURIYA DA BODYSODA 😂</p>
-            <p id="used-time" class="text-xs text-gray-500"></p>
+            <p id="used-time" class="text-xs text-gray-400 opacity-60"></p>
         `;
         const t = status.usedAt ? new Date(status.usedAt).toLocaleString('en-IN') : '';
         setText('used-time', t ? `Redeemed at: ${t}` : 'Time unknown');
