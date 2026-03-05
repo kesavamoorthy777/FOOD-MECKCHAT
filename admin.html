@@ -299,6 +299,22 @@
                 </div>
             </div>
 
+            <!-- Scan from Local File -->
+            <div class="glass rounded-2xl p-5 mb-4">
+                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📂 Scan from Local</h3>
+                <div class="flex flex-col gap-3">
+                    <label for="qr-input-file"
+                        class="cursor-pointer border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-orange-500/50 transition-colors bg-white/5">
+                        <div class="text-2xl mb-2">🖼️</div>
+                        <p class="text-sm font-medium text-gray-300">Choose QR Image</p>
+                        <p class="text-xs text-gray-500 mt-1">Select an image from gallery or file</p>
+                        <input id="qr-input-file" type="file" accept="image/*" class="hidden"
+                            onchange="scanLocalFile(event)" />
+                    </label>
+                    <div id="file-scan-status" class="hidden text-xs text-center py-1"></div>
+                </div>
+            </div>
+
             <!-- Manual lookup -->
             <div class="glass rounded-2xl p-5 mb-4">
                 <h3 class="text-sm font-semibold mb-3">🔍 Manual Lookup</h3>

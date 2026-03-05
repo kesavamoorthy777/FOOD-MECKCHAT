@@ -140,28 +140,104 @@ function switchTab(tab) {
 }
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────
-function startScanner() {
+async function startScanner() {
     if (scannerRunning) return;
+
+    // Check for secure context
+    if (!window.isSecureContext && location.hostname !== 'localhost') {
+        alert('⚠️ Camera access requires a secure context (HTTPS) or localhost.\nIf you are on a mobile device, please browse via HTTPS.');
+    }
+
+    if (typeof Html5Qrcode === 'undefined') {
+        alert('⚠️ QR library not loaded. Please check your internet connection.');
+        return;
+    }
+
+    const readerEl = document.getElementById('reader');
+    readerEl.innerHTML = `
+        <div class="flex flex-col items-center gap-3 fade-in">
+            <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="text-center">
+                <p class="text-sm font-bold text-orange-400">Initializing Camera...</p>
+                <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Please allow permissions</p>
+            </div>
+        </div>
+    `;
+
     document.getElementById('start-btn').classList.add('hidden');
     document.getElementById('stop-btn').classList.remove('hidden');
 
-    html5QrScanner = new Html5Qrcode('reader');
-    html5QrScanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
-        onScanSuccess,
-        () => { } // ignore frame failures
-    ).then(() => { scannerRunning = true; })
-        .catch(err => {
-            console.error(err);
-            alert('⚠️ Cannot access camera. Please allow camera permissions.');
-            resetScannerUI();
-        });
+    try {
+        if (!html5QrScanner) {
+            html5QrScanner = new Html5Qrcode('reader');
+        }
+
+        await html5QrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
+            onScanSuccess,
+            () => { } // ignore frame failures
+        );
+        scannerRunning = true;
+    } catch (err) {
+        console.error('Scanner start error:', err);
+        let msg = '⚠️ Cannot access camera.';
+        if (err.name === 'NotAllowedError') msg += '\nPermission denied. Please enable camera access in browser settings.';
+        else if (err.name === 'NotFoundError') msg += '\nNo camera found on this device.';
+        else msg += '\nError: ' + (err.message || 'Unknown error');
+
+        alert(msg);
+        resetScannerUI();
+    }
 }
 
-function stopScanner() {
+async function stopScanner() {
     if (!html5QrScanner || !scannerRunning) return;
-    html5QrScanner.stop().then(() => { html5QrScanner.clear(); resetScannerUI(); }).catch(console.error);
+    try {
+        await html5QrScanner.stop();
+        scannerRunning = false;
+        resetScannerUI();
+    } catch (err) {
+        console.error('Stop scanner error:', err);
+        // Fallback reset
+        resetScannerUI();
+    }
+}
+
+// Scan from Local File
+async function scanLocalFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // If camera is running, stop it first to avoid conflicts
+    if (scannerRunning) {
+        await stopScanner();
+    }
+
+    const statusEl = document.getElementById('file-scan-status');
+    statusEl.textContent = '⌛ Processing image...';
+    statusEl.className = 'text-xs text-center py-1 text-orange-400 font-medium';
+    statusEl.classList.remove('hidden');
+
+    try {
+        // We can use a one-off instance for scanning files
+        const fileScanner = new Html5Qrcode('reader');
+        const result = await fileScanner.scanFile(file, true);
+
+        statusEl.textContent = '✅ QR Code Found!';
+        statusEl.className = 'text-xs text-center py-1 text-green-400 font-bold';
+
+        onScanSuccess(result);
+
+        // Hide status after success
+        setTimeout(() => statusEl.classList.add('hidden'), 5000);
+    } catch (err) {
+        console.error('File scan error:', err);
+        statusEl.textContent = '❌ No QR code found in this image.';
+        statusEl.className = 'text-xs text-center py-1 text-red-400 font-medium';
+    } finally {
+        event.target.value = ''; // Reset input
+    }
 }
 
 function resetScannerUI() {
