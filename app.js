@@ -111,7 +111,6 @@ function showResult(student) {
     }
 
     generateQR(student);
-    setupWhatsAppShare(student);
 
     document.getElementById('form-section').classList.add('hidden');
     const rs = document.getElementById('result-section');
@@ -156,20 +155,6 @@ async function downloadQR() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
-// ─── WhatsApp Share ───────────────────────────────────────────────────────────
-function setupWhatsAppShare(student) {
-    const msg = encodeURIComponent(
-        `🍽️ *College Food Token*\n\n` +
-        `👤 *Name:* ${student.name}\n` +
-        `🎓 *Register No:* ${student.registerNumber}\n` +
-        `🏛️ *Year:* ${student.year}\n` +
-        `🎟️ *Token ID:* ${student.tokenId}\n` +
-        `🔧 *Dept:* Mechanical Engineering\n\n` +
-        `📱 Show this QR at the food counter.`
-    );
-    document.getElementById('whatsapp-btn').onclick = () =>
-        window.open(`https://wa.me/91${student.phone}?text=${msg}`, '_blank');
-}
 
 // ─── Reset ────────────────────────────────────────────────────────────────────
 function resetForm() {

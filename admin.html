@@ -285,86 +285,100 @@
 
         <!-- ══════════ SCANNER TAB ══════════ -->
         <div id="panel-scan" class="fade-in">
-            <div class="glass rounded-2xl p-5 mb-4">
-                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📷 Scan QR Code</h3>
-                <div id="reader"
-                    class="w-full mb-4 rounded-2xl overflow-hidden bg-black/30 min-h-[200px] flex items-center justify-center">
-                    <p class="text-gray-500 text-sm text-center px-4">Tap Start Camera to begin scanning</p>
+            <!-- Scanner Inputs Group (Hidden when result is shown) -->
+            <div id="scanner-inputs">
+                <div class="glass rounded-2xl p-5 mb-4">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📷 Scan QR Code</h3>
+                    <div id="reader"
+                        class="w-full mb-4 rounded-2xl overflow-hidden bg-black/30 min-h-[200px] flex items-center justify-center">
+                        <p class="text-gray-500 text-sm text-center px-4">Tap Start Camera to begin scanning</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="start-btn" onclick="startScanner()"
+                            class="btn-primary flex-1 py-3 rounded-xl font-semibold text-sm">▶ Start Camera</button>
+                        <button id="stop-btn" onclick="stopScanner()"
+                            class="glass flex-1 py-3 rounded-xl font-semibold text-sm text-gray-300 hidden">⏹
+                            Stop</button>
+                    </div>
                 </div>
-                <div class="flex gap-2">
-                    <button id="start-btn" onclick="startScanner()"
-                        class="btn-primary flex-1 py-3 rounded-xl font-semibold text-sm">▶ Start Camera</button>
-                    <button id="stop-btn" onclick="stopScanner()"
-                        class="glass flex-1 py-3 rounded-xl font-semibold text-sm text-gray-300 hidden">⏹ Stop</button>
+
+                <!-- Scan from Local File -->
+                <div class="glass rounded-2xl p-5 mb-4">
+                    <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📂 Scan from Local</h3>
+                    <div class="flex flex-col gap-3">
+                        <label for="qr-input-file"
+                            class="cursor-pointer border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-orange-500/50 transition-colors bg-white/5">
+                            <div class="text-2xl mb-2">🖼️</div>
+                            <p class="text-sm font-medium text-gray-300">Choose QR Image</p>
+                            <p class="text-xs text-gray-500 mt-1">Select an image from gallery or file</p>
+                            <input id="qr-input-file" type="file" accept="image/*" class="hidden"
+                                onchange="scanLocalFile(event)" />
+                        </label>
+                        <div id="file-scan-status" class="hidden text-xs text-center py-1"></div>
+                    </div>
+                </div>
+
+                <!-- Manual lookup -->
+                <div class="glass rounded-2xl p-5 mb-4">
+                    <h3 class="text-sm font-semibold mb-3">🔍 Manual Lookup</h3>
+                    <div class="flex gap-2">
+                        <input id="manual-token" type="text" placeholder="Token ID or Register No."
+                            class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm" />
+                        <button onclick="manualLookup()"
+                            class="btn-primary px-4 py-3 rounded-xl font-semibold text-sm">Go</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Scan from Local File -->
-            <div class="glass rounded-2xl p-5 mb-4">
-                <h3 class="text-sm font-semibold mb-3 flex items-center gap-2">📂 Scan from Local</h3>
-                <div class="flex flex-col gap-3">
-                    <label for="qr-input-file"
-                        class="cursor-pointer border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-orange-500/50 transition-colors bg-white/5">
-                        <div class="text-2xl mb-2">🖼️</div>
-                        <p class="text-sm font-medium text-gray-300">Choose QR Image</p>
-                        <p class="text-xs text-gray-500 mt-1">Select an image from gallery or file</p>
-                        <input id="qr-input-file" type="file" accept="image/*" class="hidden"
-                            onchange="scanLocalFile(event)" />
-                    </label>
-                    <div id="file-scan-status" class="hidden text-xs text-center py-1"></div>
-                </div>
-            </div>
-
-            <!-- Manual lookup -->
-            <div class="glass rounded-2xl p-5 mb-4">
-                <h3 class="text-sm font-semibold mb-3">🔍 Manual Lookup</h3>
-                <div class="flex gap-2">
-                    <input id="manual-token" type="text" placeholder="Token ID or Register No."
-                        class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 text-sm" />
-                    <button onclick="manualLookup()"
-                        class="btn-primary px-4 py-3 rounded-xl font-semibold text-sm">Go</button>
-                </div>
-            </div>
-
-            <!-- Scan Result -->
+            <!-- Scan Result (Prominent View) -->
             <div id="scan-result" class="hidden mb-4 result-appear">
-                <div id="scan-result-inner" class="rounded-2xl p-5">
-                    <div class="flex items-start gap-3 mb-4">
+                <div id="scan-result-inner" class="rounded-2xl p-6 border-2 border-orange-500/20">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-orange-400">Scan Result</h3>
+                        <button onclick="clearResult()"
+                            class="text-xs glass px-3 py-1 rounded-full text-gray-400 hover:text-white transition-colors">✕
+                            Close</button>
+                    </div>
+
+                    <div class="flex items-start gap-4 mb-6">
                         <div id="result-icon"
-                            class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0"></div>
-                        <div class="flex-1 min-w-0">
-                            <p id="result-name" class="font-bold text-base leading-tight"></p>
-                            <p id="result-dept" class="text-xs text-gray-400 mt-0.5"></p>
-                            <p id="result-year-tag" class="text-xs mt-0.5"></p>
-                        </div>
-                        <div id="result-badge" class="ml-auto px-2 py-1 rounded-full text-xs font-bold shrink-0"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <div class="bg-white/5 rounded-xl px-3 py-2">
-                            <p class="text-xs text-gray-500">Register No.</p>
-                            <p id="result-reg" class="font-semibold text-sm text-orange-300 truncate"></p>
-                        </div>
-                        <div class="bg-white/5 rounded-xl px-3 py-2">
-                            <p class="text-xs text-gray-500">Token ID</p>
-                            <p id="result-token-id" class="font-semibold text-sm text-orange-300 truncate"></p>
-                        </div>
-                        <div class="bg-white/5 rounded-xl px-3 py-2">
-                            <p class="text-xs text-gray-500">Phone</p>
-                            <p id="result-phone" class="font-semibold text-sm"></p>
-                        </div>
-                        <div class="bg-white/5 rounded-xl px-3 py-2">
-                            <p class="text-xs text-gray-500">Status</p>
-                            <p id="result-status-text" class="font-semibold text-sm"></p>
+                            class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shrink-0"></div>
+                        <div class="flex-1 min-w-0 pt-1">
+                            <p id="result-name" class="font-bold text-xl leading-tight mb-1"></p>
+                            <p id="result-dept" class="text-xs text-gray-400"></p>
+                            <p id="result-year-tag" class="text-xs mt-1"></p>
                         </div>
                     </div>
-                    <button id="mark-used-btn" onclick="markCurrentTokenUsed()"
-                        class="btn-red w-full py-3.5 rounded-xl font-bold text-white text-sm hidden">
-                        ✓ Mark as Used (Token Redeemed)
-                    </button>
-                    <div id="already-used-info"
-                        class="hidden bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-center">
-                        <p class="text-red-400 font-semibold text-sm">⛔ Already Redeemed</p>
-                        <p id="used-time" class="text-xs text-gray-500 mt-0.5"></p>
+
+                    <div id="result-badge" class="w-full text-center py-2 rounded-xl text-sm font-bold mb-6"></div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-white/5 rounded-xl px-4 py-3">
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Register No.</p>
+                            <p id="result-reg" class="font-bold text-sm text-orange-300 truncate"></p>
+                        </div>
+                        <div class="bg-white/5 rounded-xl px-4 py-3">
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-tight">Token ID</p>
+                            <p id="result-token-id" class="font-bold text-sm text-orange-300 truncate"></p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button id="mark-used-btn" onclick="markCurrentTokenUsed()"
+                            class="btn-red w-full py-4 rounded-xl font-bold text-white text-base">
+                            ✓ Mark as Used
+                        </button>
+
+                        <div id="already-used-info"
+                            class="hidden bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-4 text-center">
+                            <p class="text-red-400 font-bold text-sm">⛔ Already Redeemed</p>
+                            <p id="used-time" class="text-xs text-gray-500 mt-1"></p>
+                        </div>
+
+                        <button onclick="clearResult()"
+                            class="w-full py-4 rounded-xl font-bold glass text-gray-300 text-sm hover:bg-white/10 transition-all mt-2">
+                            ↺ Scan Next Ticket
+                        </button>
                     </div>
                 </div>
             </div>

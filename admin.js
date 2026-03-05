@@ -172,9 +172,18 @@ async function startScanner() {
             html5QrScanner = new Html5Qrcode('reader');
         }
 
+        // Try to start with more flexible constraints
         await html5QrScanner.start(
             { facingMode: 'environment' },
-            { fps: 10, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
+            {
+                fps: 15,
+                qrbox: (viewfinderWidth, viewfinderHeight) => {
+                    const minEdgeSizeRatio = 0.7;
+                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                    const qrboxSize = Math.floor(minEdgeSize * minEdgeSizeRatio);
+                    return { width: qrboxSize, height: qrboxSize };
+                }
+            },
             onScanSuccess,
             () => { } // ignore frame failures
         );
@@ -209,34 +218,40 @@ async function scanLocalFile(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // If camera is running, stop it first to avoid conflicts
+    // If camera is running, stop it first to move the reader to file scan
     if (scannerRunning) {
         await stopScanner();
     }
 
     const statusEl = document.getElementById('file-scan-status');
-    statusEl.textContent = '⌛ Processing image...';
-    statusEl.className = 'text-xs text-center py-1 text-orange-400 font-medium';
+    statusEl.innerHTML = '<span class="animate-pulse">⌛ Processing image...</span>';
+    statusEl.className = 'text-xs text-center py-2 text-orange-400 font-medium';
     statusEl.classList.remove('hidden');
 
-    try {
-        // We can use a one-off instance for scanning files
-        const fileScanner = new Html5Qrcode('reader');
-        const result = await fileScanner.scanFile(file, true);
+    // Create a temporary element for file scanning if needed or use the reader
+    const tempScanner = new Html5Qrcode('reader');
 
-        statusEl.textContent = '✅ QR Code Found!';
-        statusEl.className = 'text-xs text-center py-1 text-green-400 font-bold';
+    try {
+        // Option 'true' shows the image in the reader div while scanning
+        const result = await tempScanner.scanFile(file, true);
+
+        statusEl.innerHTML = '✅ QR Code Found!';
+        statusEl.className = 'text-xs text-center py-2 text-green-400 font-bold';
 
         onScanSuccess(result);
 
-        // Hide status after success
-        setTimeout(() => statusEl.classList.add('hidden'), 5000);
+        // Brief delay before cleanup
+        setTimeout(() => {
+            statusEl.classList.add('hidden');
+        }, 3000);
     } catch (err) {
         console.error('File scan error:', err);
-        statusEl.textContent = '❌ No QR code found in this image.';
-        statusEl.className = 'text-xs text-center py-1 text-red-400 font-medium';
+        statusEl.innerHTML = '❌ No QR code found in this image.<br><span class="text-[10px] opacity-70">Try a closer or clearer photo.</span>';
+        statusEl.className = 'text-xs text-center py-2 text-red-400 font-medium';
     } finally {
-        event.target.value = ''; // Reset input
+        event.target.value = ''; // Reset input to allow same file selection
+        // Important: we don't clear the tempScanner here if we want to show the image,
+        // but it will be cleared when camera starts again.
     }
 }
 
@@ -248,10 +263,15 @@ function resetScannerUI() {
 }
 
 function onScanSuccess(text) {
+    // Pause the scanner until the user deals with the result
     if (html5QrScanner && scannerRunning) {
-        html5QrScanner.pause(true);
-        setTimeout(() => { try { if (scannerRunning) html5QrScanner.resume(); } catch (e) { } }, 3000);
+        try {
+            html5QrScanner.pause(true);
+        } catch (e) {
+            console.error('Error pausing scanner:', e);
+        }
     }
+
     try {
         const d = JSON.parse(text);
         // Support both old format (d.reg) and new format (d['REGISTER NUMBER'])
@@ -280,6 +300,12 @@ function lookupStudent(identifier, tokenIdHint) {
     const resultEl = document.getElementById('scan-result');
     resultEl.classList.remove('hidden');
     resultEl.classList.add('result-appear');
+
+    // Hide the scanner inputs to focus on the result
+    const inputsEl = document.getElementById('scanner-inputs');
+    if (inputsEl) {
+        inputsEl.classList.add('hidden');
+    }
 
     if (!student) {
         styleResult('red');
@@ -343,7 +369,32 @@ function setStatusText(text, color) {
     el.textContent = text;
     el.className = `font-semibold text-sm ${color === 'green' ? 'text-green-400' : 'text-red-400'}`;
 }
-function setText(id, val) { document.getElementById(id).textContent = val; }
+function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+// ─── Clear Result ─────────────────────────────────────────────────────────────
+function clearResult() {
+    document.getElementById('scan-result').classList.add('hidden');
+
+    const inputsEl = document.getElementById('scanner-inputs');
+    if (inputsEl) {
+        inputsEl.classList.remove('hidden');
+    }
+
+    document.getElementById('manual-token').value = '';
+    currentScannedStudent = null;
+
+    // Resume the scanner if it's still marked as running
+    if (html5QrScanner && scannerRunning) {
+        try {
+            html5QrScanner.resume();
+        } catch (e) {
+            console.error('Error resuming scanner:', e);
+        }
+    }
+}
 
 // ─── Mark Token Used ──────────────────────────────────────────────────────────
 function markCurrentTokenUsed() {
