@@ -14,7 +14,6 @@ const ADMINS = [
     { id: 'A4', name: 'Committee Member 4', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#a855f7', initials: 'FC4' },
     { id: 'A5', name: 'Committee Member 5', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#ec4899', initials: 'FC5' },
     { id: 'A6', name: 'Committee Member 6', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#14b8a6', initials: 'FC6' },
-    { id: 'A7', name: 'Committee Member 7', role: 'Food Committee Admin', password: 'Kesavan@7', color: '#dc2626', initials: 'FC7' },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -141,180 +140,75 @@ function switchTab(tab) {
 }
 
 // ─── Scanner ──────────────────────────────────────────────────────────────────
-async function startScanner() {
+function startScanner() {
     if (scannerRunning) return;
-
-    // Check for secure context
-    if (!window.isSecureContext && location.hostname !== 'localhost') {
-        alert('⚠️ Camera access requires a secure context (HTTPS) or localhost.\nIf you are on a mobile device, please browse via HTTPS.');
-    }
-
-    if (typeof Html5Qrcode === 'undefined') {
-        alert('⚠️ QR library not loaded. Please check your internet connection.');
-        return;
-    }
-
-    const readerEl = document.getElementById('reader');
-    readerEl.innerHTML = `
-        <div class="flex flex-col items-center gap-3 fade-in">
-            <div class="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-            <div class="text-center">
-                <p class="text-sm font-bold text-orange-400">Initializing Camera...</p>
-                <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-widest font-bold">Please allow permissions</p>
-            </div>
-        </div>
-    `;
-
     document.getElementById('start-btn').classList.add('hidden');
     document.getElementById('stop-btn').classList.remove('hidden');
 
-    try {
-        if (!html5QrScanner) {
-            html5QrScanner = new Html5Qrcode('reader');
-        }
+    // Hide result if showing
+    document.getElementById('scan-result').classList.add('hidden');
 
-        // Try to start with more flexible constraints
-        await html5QrScanner.start(
-            { facingMode: 'environment' },
-            {
-                fps: 15,
-                qrbox: (viewfinderWidth, viewfinderHeight) => {
-                    const minEdgeSizeRatio = 0.7;
-                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    const qrboxSize = Math.floor(minEdgeSize * minEdgeSizeRatio);
-                    return { width: qrboxSize, height: qrboxSize };
-                }
-            },
-            onScanSuccess,
-            () => { } // ignore frame failures
-        );
-        scannerRunning = true;
-    } catch (err) {
-        console.error('Scanner start error:', err);
-        let msg = '⚠️ Cannot access camera.';
-        if (err.name === 'NotAllowedError') msg += '\nPermission denied. Please enable camera access in browser settings.';
-        else if (err.name === 'NotFoundError') msg += '\nNo camera found on this device.';
-        else msg += '\nError: ' + (err.message || 'Unknown error');
+    // Clear and create new instance
+    const readerEl = document.getElementById('reader');
+    readerEl.innerHTML = "";
 
-        alert(msg);
-        resetScannerUI();
-    }
+    html5QrScanner = new Html5Qrcode('reader');
+    html5QrScanner.start(
+        { facingMode: 'environment' },
+        { fps: 15, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 },
+        onScanSuccess,
+        () => { } // ignore frame failures
+    ).then(() => { scannerRunning = true; })
+        .catch(err => {
+            console.error(err);
+            alert('⚠️ Cannot access camera. Ensure you are using HTTPS and have granted permission.');
+            resetScannerUI();
+        });
 }
 
-async function stopScanner() {
+function stopScanner() {
     if (!html5QrScanner || !scannerRunning) return;
-    try {
-        await html5QrScanner.stop();
-        scannerRunning = false;
+    html5QrScanner.stop().then(() => {
+        html5QrScanner = null;
         resetScannerUI();
-    } catch (err) {
-        console.error('Stop scanner error:', err);
-        // Fallback reset
-        resetScannerUI();
-    }
-}
-
-// Scan from Local File
-async function scanLocalFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    // If camera is running, stop it first to move the reader to file scan
-    if (scannerRunning) {
-        await stopScanner();
-    }
-
-    const statusEl = document.getElementById('file-scan-status');
-    statusEl.innerHTML = '<span class="animate-pulse">⌛ Processing image...</span>';
-    statusEl.className = 'text-xs text-center py-2 text-orange-400 font-medium';
-    statusEl.classList.remove('hidden');
-
-    // Create a temporary element for file scanning if needed or use the reader
-    const tempScanner = new Html5Qrcode('reader');
-
-    try {
-        // Option 'true' shows the image in the reader div while scanning
-        const result = await tempScanner.scanFile(file, true);
-
-        statusEl.innerHTML = '✅ QR Code Found!';
-        statusEl.className = 'text-xs text-center py-2 text-green-400 font-bold';
-
-        onScanSuccess(result);
-
-        // Brief delay before cleanup
-        setTimeout(() => {
-            statusEl.classList.add('hidden');
-        }, 3000);
-    } catch (err) {
-        console.error('File scan error:', err);
-        statusEl.innerHTML = '❌ No QR code found in this image.<br><span class="text-[10px] opacity-70">Try a closer or clearer photo.</span>';
-        statusEl.className = 'text-xs text-center py-2 text-red-400 font-medium';
-    } finally {
-        event.target.value = ''; // Reset input to allow same file selection
-        // Important: we don't clear the tempScanner here if we want to show the image,
-        // but it will be cleared when camera starts again.
-    }
+    }).catch(console.error);
 }
 
 function resetScannerUI() {
     scannerRunning = false;
     document.getElementById('start-btn').classList.remove('hidden');
     document.getElementById('stop-btn').classList.add('hidden');
-    document.getElementById('reader').innerHTML = '<p class="text-gray-500 text-sm text-center px-4">Tap Start Camera to begin scanning</p>';
+    const readerEl = document.getElementById('reader');
+    readerEl.innerHTML = '<p class="text-gray-500 text-sm text-center px-4">Tap Start Camera to begin scanning</p>';
 }
 
 function onScanSuccess(text) {
-    const cleanText = text.trim();
+    if (navigator.vibrate) navigator.vibrate(100);
 
-    // Pause the scanner until the user deals with the result
+    // Stop scanner to focus on results
     if (html5QrScanner && scannerRunning) {
-        try { html5QrScanner.pause(true); } catch (e) { }
-    }
+        html5QrScanner.stop().then(() => {
+            scannerRunning = false;
+            resetScannerUI();
 
-    try {
-        let reg = '';
-
-        // Strategy 1: Attempt JSON parsing if it looks like an object
-        if (cleanText.startsWith('{')) {
             try {
-                const d = JSON.parse(cleanText);
-                // Be very aggressive searching for the register number key
-                reg = d['REGISTER NUMBER'] || d['registerNumber'] || d['reg'] || d['tokenId'] ||
-                    d['TOKEN ID'] || d['REG'] || d['TOKEN'] || '';
-
-                // If keys are missing but object exists, try finding any 16-digit string inside
-                if (!reg) {
-                    const foundReg = Object.values(d).find(v => typeof v === 'string' && /^\d{10,16}$/.test(v));
-                    if (foundReg) reg = foundReg;
-                }
-            } catch (je) {
-                console.warn('JSON parse partially failed, falling back to regex');
+                const d = JSON.parse(text);
+                const reg = d['REGISTER NUMBER'] || d.reg || d.REGISTER_NUMBER || '';
+                lookupStudent(String(reg).trim(), reg);
+            } catch {
+                lookupStudent(text.trim(), null);
             }
-        }
-
-        // Strategy 2: Regex extraction (Case Insensitive) if Strategy 1 failed
-        if (!reg) {
-            const rMatch = cleanText.match(/"?REGISTER NUMBER"?\s*[:=]\s*"?(\d+)"?/i) ||
-                cleanText.match(/"?reg"?\s*[:=]\s*"?(\d+)"?/i) ||
-                cleanText.match(/"?tokenId"?\s*[:=]\s*"?(\d+)"?/i);
-            if (rMatch) reg = rMatch[1];
-        }
-
-        // Strategy 3: Pure digit extraction (Any string of 12-16 digits)
-        if (!reg) {
-            const digits = cleanText.match(/\d{12,16}/);
-            if (digits) reg = digits[0];
-        }
-
-        if (reg) {
-            lookupStudent(String(reg).trim(), reg);
-        } else {
-            // Raw text fallback
-            lookupStudent(cleanText, null);
-        }
-    } catch (err) {
-        console.error('onScanSuccess processing error:', err);
-        lookupStudent(cleanText, null);
+        }).catch(err => {
+            console.error(err);
+            // Fallback: Continue lookup even if stop fails
+            try {
+                const d = JSON.parse(text);
+                const reg = d['REGISTER NUMBER'] || d.reg || '';
+                lookupStudent(String(reg).trim(), reg);
+            } catch {
+                lookupStudent(text.trim(), null);
+            }
+        });
     }
 }
 
@@ -337,17 +231,11 @@ function lookupStudent(identifier, tokenIdHint) {
     resultEl.classList.remove('hidden');
     resultEl.classList.add('result-appear');
 
-    // Hide the scanner inputs to focus on the result
-    const inputsEl = document.getElementById('scanner-inputs');
-    if (inputsEl) {
-        inputsEl.classList.add('hidden');
-    }
-
     if (!student) {
         styleResult('red');
         document.getElementById('result-icon').textContent = '❌';
-        document.getElementById('result-name').textContent = 'Invalid Token';
-        document.getElementById('result-dept').textContent = 'No student found';
+        document.getElementById('result-name').textContent = 'Invalid ID';
+        document.getElementById('result-dept').textContent = 'No matching student found';
         document.getElementById('result-year-tag').textContent = '';
         setBadge('🚫 Invalid', 'red');
         setText('result-reg', identifier);
@@ -364,7 +252,7 @@ function lookupStudent(identifier, tokenIdHint) {
     const status = getTokenStatus(student.tokenId);
 
     setText('result-name', student.name);
-    setText('result-dept', student.department || '');
+    setText('result-dept', student.department || 'Mechanical Engineering');
     setText('result-year-tag', student.year || '');
     document.getElementById('result-year-tag').className = 'text-xs mt-0.5 text-orange-300 font-medium';
     setText('result-reg', String(student.registerNumber));
@@ -374,22 +262,19 @@ function lookupStudent(identifier, tokenIdHint) {
     if (status.used) {
         styleResult('red');
         document.getElementById('result-icon').textContent = '🚫';
-        setBadge('🚫 Used', 'red');
-        setStatusText('Redeemed', 'red');
+        setBadge('🚫 Already Read', 'red');
+        setStatusText('Read (Served)', 'red');
         document.getElementById('mark-used-btn').classList.add('hidden');
         document.getElementById('already-used-info').classList.remove('hidden');
-        document.getElementById('already-used-info').innerHTML = `
-            <p class="text-red-400 font-black text-sm mb-1">THIRUMBA VANGURIYA DA BODYSODA 😂</p>
-            <p id="used-time" class="text-xs text-gray-400 opacity-60"></p>
-        `;
         const t = status.usedAt ? new Date(status.usedAt).toLocaleString('en-IN') : '';
-        setText('used-time', t ? `Redeemed at: ${t}` : 'Time unknown');
+        setText('used-time', t ? `Marked Read at: ${t}` : 'Time unknown');
     } else {
         styleResult('green');
         document.getElementById('result-icon').textContent = '✅';
         setBadge('✅ Valid', 'green');
-        setStatusText('Valid', 'green');
+        setStatusText('Ready to Mark', 'green');
         document.getElementById('mark-used-btn').classList.remove('hidden');
+        document.getElementById('mark-used-btn').textContent = '✓ Mark as Read (Confirm Food)';
         document.getElementById('already-used-info').classList.add('hidden');
     }
 }
@@ -409,32 +294,7 @@ function setStatusText(text, color) {
     el.textContent = text;
     el.className = `font-semibold text-sm ${color === 'green' ? 'text-green-400' : 'text-red-400'}`;
 }
-function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-}
-
-// ─── Clear Result ─────────────────────────────────────────────────────────────
-function clearResult() {
-    document.getElementById('scan-result').classList.add('hidden');
-
-    const inputsEl = document.getElementById('scanner-inputs');
-    if (inputsEl) {
-        inputsEl.classList.remove('hidden');
-    }
-
-    document.getElementById('manual-token').value = '';
-    currentScannedStudent = null;
-
-    // Resume the scanner if it's still marked as running
-    if (html5QrScanner && scannerRunning) {
-        try {
-            html5QrScanner.resume();
-        } catch (e) {
-            console.error('Error resuming scanner:', e);
-        }
-    }
-}
+function setText(id, val) { document.getElementById(id).textContent = val; }
 
 // ─── Mark Token Used ──────────────────────────────────────────────────────────
 function markCurrentTokenUsed() {
@@ -624,20 +484,10 @@ function renderBoughtList() {
             ${s.year?.includes('Final') ? 'Final Yr' : s.year?.includes('3rd') ? '3rd Yr' : '2nd Yr'}
           </span>
           <span class="text-xs text-green-400 font-semibold">✅ Bought</span>
-          ${(currentAdmin && currentAdmin.id === 'A7')
-                ? `<button onclick="deleteEntry('${s.tokenId}')" class="mt-2 text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded border border-red-500/30 font-bold hover:bg-red-500/40 transition-colors">🗑 Delete</button>`
-                : ''}
         </div>
       </div>
     `);
     });
-}
-
-function deleteEntry(tokenId) {
-    if (!confirm('Are you SURE you want to delete this redemption entry?\nThis will make the token VALID again.')) return;
-    deleteTokenEntry(tokenId);
-    renderBoughtList();
-    refreshStats();
 }
 
 // ─── All Tokens List ──────────────────────────────────────────────────────────

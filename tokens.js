@@ -56,18 +56,6 @@ function getStats(students) {
 }
 
 /**
- * Delete a specific token entry (admin only).
- * @param {string} tokenId
- */
-function deleteTokenEntry(tokenId) {
-  const state = getTokensState();
-  if (state[tokenId]) {
-    delete state[tokenId];
-    saveTokensState(state);
-  }
-}
-
-/**
  * Reset all token states (admin utility).
  */
 function resetAllTokens() {
