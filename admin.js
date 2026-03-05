@@ -191,23 +191,26 @@ function onScanSuccess(text) {
             scannerRunning = false;
             resetScannerUI();
 
+            // Try to handle the scanned text
+            let processedText = text.trim();
+
+            // Sometimes scanners add extra quotes or weird characters
+            if (processedText.startsWith('"') && processedText.endsWith('"')) {
+                processedText = processedText.slice(1, -1);
+            }
+
             try {
-                const d = JSON.parse(text);
-                const reg = d['REGISTER NUMBER'] || d.reg || d.REGISTER_NUMBER || '';
+                const d = JSON.parse(processedText);
+                const reg = d['REGISTER NUMBER'] || d.reg || d.REGISTER_NUMBER || d['TOKEN ID'] || '';
                 lookupStudent(String(reg).trim(), reg);
-            } catch {
-                lookupStudent(text.trim(), null);
+            } catch (e) {
+                // If not valid JSON, maybe the identifier is raw or we can extract it
+                lookupStudent(processedText, null);
             }
         }).catch(err => {
-            console.error(err);
-            // Fallback: Continue lookup even if stop fails
-            try {
-                const d = JSON.parse(text);
-                const reg = d['REGISTER NUMBER'] || d.reg || '';
-                lookupStudent(String(reg).trim(), reg);
-            } catch {
-                lookupStudent(text.trim(), null);
-            }
+            console.error('Stop error', err);
+            // Fallback even if stop fails
+            lookupStudent(text.trim(), null);
         });
     }
 }
@@ -221,11 +224,23 @@ function manualLookup() {
 
 // ─── Student Lookup ───────────────────────────────────────────────────────────
 function lookupStudent(identifier, tokenIdHint) {
-    const student = STUDENTS.find(s =>
-        String(s.registerNumber).trim() === identifier ||
-        s.tokenId === identifier ||
-        s.tokenId === tokenIdHint
-    );
+    let searchId = String(identifier || '').trim();
+    let searchHint = String(tokenIdHint || '').trim();
+
+    // If identifier is a JSON string (failsafe), try to parse it
+    if (searchId.startsWith('{') && searchId.endsWith('}')) {
+        try {
+            const d = JSON.parse(searchId);
+            const reg = d['REGISTER NUMBER'] || d.reg || d.REGISTER_NUMBER || d['TOKEN ID'];
+            if (reg) searchId = String(reg).trim();
+        } catch (e) { }
+    }
+
+    const student = STUDENTS.find(s => {
+        const sReg = String(s.registerNumber).trim();
+        const sToken = String(s.tokenId).trim();
+        return sReg === searchId || sToken === searchId || (searchHint && sToken === searchHint);
+    });
 
     const resultEl = document.getElementById('scan-result');
     resultEl.classList.remove('hidden');
@@ -238,7 +253,7 @@ function lookupStudent(identifier, tokenIdHint) {
         document.getElementById('result-dept').textContent = 'No matching student found';
         document.getElementById('result-year-tag').textContent = '';
         setBadge('🚫 Invalid', 'red');
-        setText('result-reg', identifier);
+        setText('result-reg', searchId.length > 25 ? searchId.substring(0, 22) + '...' : searchId);
         setText('result-token-id', '—');
         setText('result-phone', '—');
         setStatusText('Not Found', 'red');
@@ -259,24 +274,32 @@ function lookupStudent(identifier, tokenIdHint) {
     setText('result-token-id', student.tokenId);
     setText('result-phone', student.phone ? '+91 ' + student.phone : '—');
 
-    if (status.used) {
+    if (status && status.used) {
         styleResult('red');
         document.getElementById('result-icon').textContent = '🚫';
         setBadge('🚫 Already Read', 'red');
-        setStatusText('Read (Served)', 'red');
+        setStatusText('Already Redeemed', 'red');
+        // CRITICAL: Ensure button is hidden
         document.getElementById('mark-used-btn').classList.add('hidden');
         document.getElementById('already-used-info').classList.remove('hidden');
         const t = status.usedAt ? new Date(status.usedAt).toLocaleString('en-IN') : '';
-        setText('used-time', t ? `Marked Read at: ${t}` : 'Time unknown');
+        setText('used-time', t ? `Redeemed at: ${t}` : 'Time unknown');
     } else {
         styleResult('green');
         document.getElementById('result-icon').textContent = '✅';
         setBadge('✅ Valid', 'green');
         setStatusText('Ready to Mark', 'green');
+        // CRITICAL: Ensure button is visible
         document.getElementById('mark-used-btn').classList.remove('hidden');
-        document.getElementById('mark-used-btn').textContent = '✓ Mark as Read (Confirm Food)';
+        document.getElementById('mark-used-btn').innerText = '✓ Mark as Used';
         document.getElementById('already-used-info').classList.add('hidden');
     }
+}
+
+// ─── Scan Next ────────────────────────────────────────────────────────────────
+function scanNext() {
+    document.getElementById('scan-result').classList.add('hidden');
+    startScanner();
 }
 
 function styleResult(color) {
@@ -299,8 +322,10 @@ function setText(id, val) { document.getElementById(id).textContent = val; }
 // ─── Mark Token Used ──────────────────────────────────────────────────────────
 function markCurrentTokenUsed() {
     if (!currentScannedStudent) return;
-    if (!confirm(`Mark token for ${currentScannedStudent.name} as USED?\nThis cannot be undone.`)) return;
+    if (!confirm(`Mark token for ${currentScannedStudent.name} as USED?`)) return;
     markTokenUsed(currentScannedStudent.tokenId, currentScannedStudent.registerNumber);
+
+    // Refresh the lookup to show the "Already Redeemed" status
     lookupStudent(String(currentScannedStudent.registerNumber), currentScannedStudent.tokenId);
     refreshStats();
     // update pie if on stats tab
