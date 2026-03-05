@@ -14,6 +14,7 @@ const ADMINS = [
     { id: 'A4', name: 'Committee Member 4', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#a855f7', initials: 'FC4' },
     { id: 'A5', name: 'Committee Member 5', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#ec4899', initials: 'FC5' },
     { id: 'A6', name: 'Committee Member 6', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#14b8a6', initials: 'FC6' },
+    { id: 'A7', name: 'Committee Member 7', role: 'Food Committee Admin', password: 'Kesavan@7', color: '#dc2626', initials: 'FC7' },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -273,11 +274,27 @@ function onScanSuccess(text) {
     }
 
     try {
-        const d = JSON.parse(text);
-        // Support both old format (d.reg) and new format (d['REGISTER NUMBER'])
-        const reg = d['REGISTER NUMBER'] || d.reg || '';
-        lookupStudent(String(reg).trim(), reg);
-    } catch {
+        // Robust JSON/Regex parsing
+        let reg = '';
+        if (text.startsWith('{')) {
+            try {
+                const d = JSON.parse(text);
+                reg = d['REGISTER NUMBER'] || d.reg || d.tokenId || '';
+            } catch (je) {
+                // Try regex fallback if JSON is slightly malformed
+                const matchReg = text.match(/"REGISTER NUMBER"\s*:\s*"([^"]+)"/i) || text.match(/"reg"\s*:\s*"([^"]+)"/i);
+                if (matchReg) reg = matchReg[1];
+            }
+        }
+
+        if (reg) {
+            lookupStudent(String(reg).trim(), reg);
+        } else {
+            // Raw text or failed to find key
+            lookupStudent(text.trim(), null);
+        }
+    } catch (err) {
+        console.error('onScanSuccess processing error:', err);
         lookupStudent(text.trim(), null);
     }
 }
@@ -342,6 +359,10 @@ function lookupStudent(identifier, tokenIdHint) {
         setStatusText('Redeemed', 'red');
         document.getElementById('mark-used-btn').classList.add('hidden');
         document.getElementById('already-used-info').classList.remove('hidden');
+        document.getElementById('already-used-info').innerHTML = `
+            <p class="text-red-400 font-black text-sm mb-1">THIRUMBA VANGURIYA DA BODYSODA 😂</p>
+            <p id="used-time" class="text-xs text-gray-500"></p>
+        `;
         const t = status.usedAt ? new Date(status.usedAt).toLocaleString('en-IN') : '';
         setText('used-time', t ? `Redeemed at: ${t}` : 'Time unknown');
     } else {
@@ -584,10 +605,20 @@ function renderBoughtList() {
             ${s.year?.includes('Final') ? 'Final Yr' : s.year?.includes('3rd') ? '3rd Yr' : '2nd Yr'}
           </span>
           <span class="text-xs text-green-400 font-semibold">✅ Bought</span>
+          ${(currentAdmin && currentAdmin.id === 'A7')
+                ? `<button onclick="deleteEntry('${s.tokenId}')" class="mt-2 text-[10px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded border border-red-500/30 font-bold hover:bg-red-500/40 transition-colors">🗑 Delete</button>`
+                : ''}
         </div>
       </div>
     `);
     });
+}
+
+function deleteEntry(tokenId) {
+    if (!confirm('Are you SURE you want to delete this redemption entry?\nThis will make the token VALID again.')) return;
+    deleteTokenEntry(tokenId);
+    renderBoughtList();
+    refreshStats();
 }
 
 // ─── All Tokens List ──────────────────────────────────────────────────────────
