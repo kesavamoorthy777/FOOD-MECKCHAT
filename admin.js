@@ -14,6 +14,7 @@ const ADMINS = [
     { id: 'A4', name: 'Committee Member 4', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#a855f7', initials: 'FC4' },
     { id: 'A5', name: 'Committee Member 5', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#ec4899', initials: 'FC5' },
     { id: 'A6', name: 'Committee Member 6', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#14b8a6', initials: 'FC6' },
+    { id: 'A7', name: 'Kesavan', role: 'Staff Coordinator', password: 'Kesavan@7', color: '#10b981', initials: 'KS' },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -104,6 +105,17 @@ function adminLogin() {
 
     document.getElementById('auth-gate').classList.add('hidden');
     document.getElementById('admin-content').classList.remove('hidden');
+
+    // Restrictions for A7 (Staff Coordinator) - only see "Bought" and "Scan"
+    if (currentAdmin.id === 'A7') {
+        document.getElementById('tab-stats').classList.add('hidden');
+        document.getElementById('tab-list').classList.add('hidden');
+        switchTab('bought');
+    } else {
+        document.getElementById('tab-stats').classList.remove('hidden');
+        document.getElementById('tab-list').classList.remove('hidden');
+        switchTab('scan');
+    }
 
     loadStudents().then(() => {
         refreshStats();
@@ -246,6 +258,11 @@ function lookupStudent(identifier, tokenIdHint) {
     resultEl.classList.remove('hidden');
     resultEl.classList.add('result-appear');
 
+    // "untill he proceed it no other scan option is to be there"
+    // Hide the scanner UI, manual lookup, and tab buttons while a result is displayed
+    document.querySelectorAll('#panel-scan > div:not(#scan-result)').forEach(el => el.classList.add('hidden'));
+    document.querySelector('main > div.grid.grid-cols-4')?.classList.add('hidden');
+
     if (!student) {
         styleResult('red');
         document.getElementById('result-icon').textContent = '❌';
@@ -299,6 +316,10 @@ function lookupStudent(identifier, tokenIdHint) {
 // ─── Scan Next ────────────────────────────────────────────────────────────────
 function scanNext() {
     document.getElementById('scan-result').classList.add('hidden');
+    // Restore the scanner UI, manual lookup, and tab buttons
+    document.querySelectorAll('#panel-scan > div').forEach(el => el.classList.remove('hidden'));
+    document.querySelector('main > div.grid.grid-cols-4')?.classList.remove('hidden');
+    document.getElementById('scan-result').classList.add('hidden'); // Ensure it stays hidden
     startScanner();
 }
 
