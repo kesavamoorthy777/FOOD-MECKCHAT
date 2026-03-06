@@ -531,10 +531,11 @@ function renderBoughtList() {
           </span>
           <div class="flex items-center gap-2">
             <span class="text-xs text-green-400 font-semibold">✅ Bought</span>
+            ${currentAdmin && currentAdmin.id === 'A7' ? `
             <button onclick="revertToken('${s.tokenId}', '${s.name.replace(/'/g, "\\'")}')" 
                     class="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded border border-red-500/30 hover:bg-red-500/40 transition-colors">
               ✕ Remove
-            </button>
+            </button>` : ''}
           </div>
         </div>
       </div>
