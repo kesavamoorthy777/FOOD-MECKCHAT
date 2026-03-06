@@ -34,6 +34,18 @@ function markTokenUsed(tokenId, registerNumber) {
 }
 
 /**
+ * Revert a token to unused status.
+ * @param {string} tokenId
+ */
+function unmarkTokenUsed(tokenId) {
+  const state = getTokensState();
+  if (state[tokenId]) {
+    delete state[tokenId];
+    saveTokensState(state);
+  }
+}
+
+/**
  * Check if a token has been used.
  * @param {string} tokenId
  * @returns {{ used: boolean, usedAt?: string, registerNumber?: string }}

@@ -8,13 +8,13 @@
 
 // ─── 6 Admin Accounts ─────────────────────────────────────────────────────────
 const ADMINS = [
-    { id: 'A1', name: 'Committee Member 1', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#f97316', initials: 'FC1' },
-    { id: 'A2', name: 'Committee Member 2', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#22c55e', initials: 'FC2' },
-    { id: 'A3', name: 'Committee Member 3', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#3b82f6', initials: 'FC3' },
-    { id: 'A4', name: 'Committee Member 4', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#a855f7', initials: 'FC4' },
-    { id: 'A5', name: 'Committee Member 5', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#ec4899', initials: 'FC5' },
-    { id: 'A6', name: 'Committee Member 6', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#14b8a6', initials: 'FC6' },
-    { id: 'A7', name: 'Kesavan', role: 'Staff Coordinator', password: 'Kesavan@7', color: '#10b981', initials: 'KS' },
+    { id: 'A1', name: ' Member 1', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#f97316', initials: 'FC1' },
+    { id: 'A2', name: ' Member 2', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#22c55e', initials: 'FC2' },
+    { id: 'A3', name: ' Member 3', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#3b82f6', initials: 'FC3' },
+    { id: 'A4', name: ' Member 4', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#a855f7', initials: 'FC4' },
+    { id: 'A5', name: ' Member 5', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#ec4899', initials: 'FC5' },
+    { id: 'A6', name: ' Member 6', role: 'Food Committee Member', password: 'Mechanical@2026', color: '#14b8a6', initials: 'FC6' },
+    { id: 'A7', name: 'Kesavan', role: 'Admin', password: 'Kesavan@7', color: '#10b981', initials: 'K7' },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -525,15 +525,31 @@ function renderBoughtList() {
           <p class="text-xs text-gray-400 truncate">${s.registerNumber}</p>
           <p class="text-xs text-gray-500 mt-0.5">⏱ ${usedAt}</p>
         </div>
-        <div class="shrink-0 text-right">
-          <span class="text-xs ${yearBadgeColor} px-2 py-0.5 rounded-full font-medium block mb-1">
+        <div class="shrink-0 text-right flex flex-col items-end gap-1">
+          <span class="text-xs ${yearBadgeColor} px-2 py-0.5 rounded-full font-medium block">
             ${s.year?.includes('Final') ? 'Final Yr' : s.year?.includes('3rd') ? '3rd Yr' : '2nd Yr'}
           </span>
-          <span class="text-xs text-green-400 font-semibold">✅ Bought</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-green-400 font-semibold">✅ Bought</span>
+            <button onclick="revertToken('${s.tokenId}', '${s.name.replace(/'/g, "\\'")}')" 
+                    class="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded border border-red-500/30 hover:bg-red-500/40 transition-colors">
+              ✕ Remove
+            </button>
+          </div>
         </div>
       </div>
     `);
     });
+}
+
+function revertToken(tokenId, name) {
+    if (!confirm(`Are you sure you want to revert the token status for ${name}?\nThis will mark the token as UNUSED.`)) return;
+    unmarkTokenUsed(tokenId);
+    renderBoughtList();
+    refreshStats();
+    if (currentScannedStudent && currentScannedStudent.tokenId === tokenId) {
+        lookupStudent(currentScannedStudent.registerNumber, tokenId);
+    }
 }
 
 // ─── All Tokens List ──────────────────────────────────────────────────────────
